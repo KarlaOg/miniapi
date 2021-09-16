@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -30,6 +29,8 @@ func addEntries(w http.ResponseWriter, req *http.Request) {
 
 		m := make(map[string]string)
 
+		var datas []string
+
 		if err := req.ParseForm(); err != nil {
 			fmt.Println("Something went bad")
 			fmt.Fprintln(w, "Something went bad")
@@ -38,9 +39,14 @@ func addEntries(w http.ResponseWriter, req *http.Request) {
 		}
 		for key, value := range req.PostForm {
 
-			m[key] = value[0]
-		}
+			switch key {
+			case "entry":
+				datas = append(datas, value[0])
+			}
 
+			m[key] = value[0]
+
+		}
 		fmt.Fprintln(w, m["author"], ":", m["entry"])
 
 		f, err := os.OpenFile("myfile.txt",
@@ -50,14 +56,14 @@ func addEntries(w http.ResponseWriter, req *http.Request) {
 		}
 		defer f.Close()
 
-		b := new(bytes.Buffer)
+		sep := "\n"
 
-		for key, value := range m {
-			fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
-		}
+		for _, value := range datas {
 
-		if _, err := f.WriteString(b.String()); err != nil {
-			log.Println(err)
+			if _, err := f.WriteString(value + sep); err != nil {
+				log.Println(err)
+
+			}
 
 		}
 
